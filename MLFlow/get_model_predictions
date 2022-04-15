@@ -1,0 +1,31 @@
+#Lets serve our wine quality model as a REST server
+#This command starts our rest server
+#>>>mlflow models serve -m runs:/4b384b149b4d4947a8c02950e4c6f7c2/elasticnet_model -p 1234
+import requests
+import pandas as pd
+
+print("loading data")
+wine_data_url = "http://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv"
+#Indicates that the request body format is JSON
+header = {'Content-Type':'application/json'}
+
+try:
+    data = pd.read_csv(wine_data_url, sep=";")
+except Exception as e:
+    logger.exception(
+        "Unable to download training & test CSV, check your internet connection. Error: %s", e
+    )
+print("loaded data succesfully")
+
+#Select 5 random samples
+samples = data.drop(["quality"], axis=1).head(5)
+
+#Serialize pandas dataframe as json
+samples_json = samples.to_json(orient="split", index=False)
+print(samples_json)
+
+#create HTTPS post request
+r = requests.post('http://127.0.0.1:1234/invocations', data=samples_json, headers=header)
+
+#get HTTPS response
+print(r.text)
